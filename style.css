@@ -1,0 +1,281 @@
+:root {
+    --primary: #1abc9c;      /* Turkusowy z TemplateMonster */
+    --primary-dark: #16a085;
+    --dark: #2c3e50;
+    --light: #ecf0f1;
+    --glass: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+    --font-main: 'Open Sans', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-main);
+    background-color: #dff9fb; /* Kolor wody */
+    color: var(--dark);
+    height: 100vh;
+    overflow: hidden; /* Blokujemy scrollowanie body, bo to "app-like" */
+    display: flex;
+}
+
+/* --- TŁO MAPY --- */
+#hero-map-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    /* Pattern imitujący mapę wektorową */
+    background-color: #C5EAE7;
+    background-image: 
+        radial-gradient(#A9DFD9 20%, transparent 20%),
+        radial-gradient(#A9DFD9 20%, transparent 20%);
+    background-size: 60px 60px;
+    background-position: 0 0, 30px 30px;
+}
+
+/* Kontynenty (dekoracja w tle) */
+.map-land {
+    position: absolute;
+    background: #fff;
+    opacity: 0.6;
+    border-radius: 40px;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    width: 80px;
+    height: 100vh;
+    background: var(--dark);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    z-index: 100;
+    transition: width 0.3s ease;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.1);
+}
+
+.sidebar:hover {
+    width: 240px;
+}
+
+.brand {
+    color: var(--primary);
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 40px;
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 0 25px;
+    width: 100%;
+    display: flex;
+    gap: 15px;
+}
+
+.sidebar nav ul {
+    list-style: none;
+    width: 100%;
+}
+
+.sidebar nav a {
+    display: flex;
+    align-items: center;
+    padding: 15px 28px;
+    color: #bdc3c7;
+    text-decoration: none;
+    transition: 0.3s;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar nav a i {
+    font-size: 1.2rem;
+    min-width: 24px;
+    margin-right: 20px;
+}
+
+.sidebar nav a:hover, .sidebar nav a.active {
+    background: var(--primary);
+    color: white;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding: 20px;
+    opacity: 0;
+    transition: 0.3s;
+}
+
+.sidebar:hover .sidebar-footer {
+    opacity: 1;
+}
+
+/* --- CONTENT OVERLAY --- */
+.content-overlay {
+    flex: 1;
+    position: relative;
+    z-index: 10;
+    padding: 40px;
+    pointer-events: none; /* Pozwala klikać w mapę pod spodem tam gdzie nie ma kart */
+}
+
+.page-section {
+    position: absolute;
+    top: 40px;
+    left: 40px;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateX(-20px);
+    pointer-events: none;
+}
+
+.page-section.active-section {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+/* Glass Cards */
+.glass-card {
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    max-width: 450px;
+}
+
+.hero-card h1 {
+    color: var(--dark);
+    margin-bottom: 10px;
+    font-size: 2rem;
+}
+
+.hero-card p {
+    color: #7f8c8d;
+    margin-bottom: 20px;
+}
+
+.stats-mini {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-item span {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-item label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #95a5a6;
+}
+
+/* Grid & Form */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.info-block { text-align: center; }
+.info-block i { font-size: 2rem; color: var(--primary); margin-bottom: 10px; }
+
+.simple-form input, .simple-form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+}
+
+.btn-small {
+    background: transparent;
+    border: 1px solid #bdc3c7;
+    color: #bdc3c7;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* --- ELEMENTY MAPY (PINY) --- */
+.map-pin {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: var(--primary);
+    border: 3px solid white;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    cursor: pointer;
+    z-index: 5;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    transition: transform 0.2s, background 0.2s;
+}
+
+.map-pin::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(0,0,0,0.1);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.map-pin:hover {
+    transform: rotate(-45deg) scale(1.2);
+    z-index: 10;
+}
+
+.map-pin.inactive {
+    background: #95a5a6; /* Szary jak wyłączona */
+}
+
+/* Animacja pulsowania dla aktywnych */
+.map-pin.active {
+    background: #e74c3c; /* Czerwony/Pomarańczowy akcent */
+}
+.map-pin.active::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50% 50% 50% 0;
+    border: 2px solid #e74c3c;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}

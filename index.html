@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina City - Smart Grid System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div id="hero-map-container"></div>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fas fa-lightbulb"></i> Lumina
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#home" class="active"><i class="fas fa-map-marked-alt"></i> Mapa</a></li>
+                <li><a href="#about"><i class="fas fa-info-circle"></i> O Systemie</a></li>
+                <li><a href="#stats"><i class="fas fa-chart-pie"></i> Statystyki</a></li>
+                <li><a href="#contact"><i class="fas fa-envelope"></i> Kontakt</a></li>
+            </ul>
+        </nav>
+        <div class="sidebar-footer">
+            <button id="reset-demo" class="btn-small"><i class="fas fa-sync"></i> Reset Mapy</button>
+        </div>
+    </aside>
+
+    <main class="content-overlay">
+        
+        <section id="home" class="page-section active-section">
+            <div class="glass-card hero-card">
+                <h1>Inteligentne Miasto</h1>
+                <p>Klikaj na punkty na mapie, aby zarządzać oświetleniem w czasie rzeczywistym.</p>
+                <div class="stats-mini">
+                    <div class="stat-item">
+                        <span id="active-count">0</span>
+                        <label>Aktywnych Latarni</label>
+                    </div>
+                    <div class="stat-item">
+                        <span id="energy-usage">0 kW</span>
+                        <label>Zużycie Energii</label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="about" class="page-section hidden-section">
+            <div class="glass-card content-card">
+                <h2>Technologia Przyszłości</h2>
+                <div class="grid-2">
+                    <div class="info-block">
+                        <i class="fas fa-network-wired"></i>
+                        <h3>Siatka IoT</h3>
+                        <p>Każda latarnia jest węzłem komunikacyjnym przesyłającym dane o ruchu i pogodzie.</p>
+                    </div>
+                    <div class="info-block">
+                        <i class="fas fa-leaf"></i>
+                        <h3>Ekologia</h3>
+                        <p>Redukcja zanieczyszczenia świetlnego o 40% dzięki dynamicznemu sterowaniu.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="stats" class="page-section hidden-section">
+            <div class="glass-card content-card">
+                <h2>Analiza Danych</h2>
+                <p>Dostarczamy pełne raporty dla zarządców miast.</p>
+                <div class="progress-bars">
+                    <div class="bar-container">
+                        <span>Oszczędność</span>
+                        <div class="progress"><div style="width: 85%"></div></div>
+                    </div>
+                    <div class="bar-container">
+                        <span>Bezpieczeństwo</span>
+                        <div class="progress"><div style="width: 92%"></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="page-section hidden-section">
+            <div class="glass-card content-card">
+                <h2>Skontaktuj się</h2>
+                <form class="simple-form">
+                    <input type="email" placeholder="Twój e-mail firmowy">
+                    <textarea placeholder="Wiadomość do działu wdrożeń"></textarea>
+                    <button type="button" class="btn-primary">Wyślij zgłoszenie</button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="main.js"></script>
+    <script src="demo.js"></script>
+</body>
+</html>
