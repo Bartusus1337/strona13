@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santa Global Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">Santa<span>Route</span> 🎅</div>
+        <div class="nav-status">Status systemu: <span class="status-ok">ONLINE</span></div>
+    </nav>
+
+    <main class="dashboard-container">
+        
+        <header class="dashboard-header fade-in">
+            <h1>Globalny Monitoring Trasy</h1>
+            <p>Klikaj na kraje na mapie, aby potwierdzić dostarczenie prezentów.</p>
+        </header>
+
+        <div class="stats-bar fade-in">
+            <div class="stat-card">
+                <div class="icon">🌍</div>
+                <div class="stat-info">
+                    <span class="label">Liczba krajów na świecie</span>
+                    <span class="value" id="total-countries">0</span>
+                </div>
+            </div>
+            
+            <div class="stat-card highlight">
+                <div class="icon">🎁</div>
+                <div class="stat-info">
+                    <span class="label">Odwiedzone kraje</span>
+                    <span class="value" id="visited-countries">0</span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="icon">⏳</div>
+                <div class="stat-info">
+                    <span class="label">Pozostało</span>
+                    <span class="value" id="remaining-countries">0</span>
+                </div>
+            </div>
+            
+            <button id="reset-btn" class="btn-reset">Resetuj Trasę ↻</button>
+        </div>
+
+        <div id="map-wrapper" class="map-container fade-in">
+            <div class="map-decoration-text">World Map Visualization</div>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2024 SantaRoute Dashboard. Dane zapisywane lokalnie.</p>
+    </footer>
+
+    <script src="main.js"></script>
+    <script src="demo.js"></script>
+</body>
+</html>
