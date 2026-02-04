@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W.O.S. - Plan Magazynu</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="noscroll">
+
+    <nav class="top-nav">
+        <a href="index.html" class="nav-brand"><i class="fas fa-microchip"></i> W.O.S. SYSTEM</a>
+        <div class="nav-links">
+            <a href="index.html">MENU</a>
+            <a href="demo.html" class="active">PLAN</a>
+            <a href="game.html">GRA</a>
+            <a href="rating.html">OCEŃ NAS</a>
+        </div>
+    </nav>
+
+    <div class="simulation-container" id="sim-container">
+        <div class="warehouse-area" id="warehouse"></div>
+        
+        <div class="highway-area" id="highway">
+            <div class="highway-lane-marker-up"><i class="fas fa-arrow-up"></i></div>
+            <div class="highway-lane-marker-down"><i class="fas fa-arrow-down"></i></div>
+        </div>
+        
+        <div class="docks-area" id="docks"></div>
+        
+        <div id="vehicle-layer"></div>
+    </div>
+
+    <footer class="control-panel">
+        <div class="stats-group">
+            <div class="stat-box">
+                <span class="stat-label">ZAPEŁNIENIE</span>
+                <span class="stat-value" id="stat-capacity">0%</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">ŁADUNKI</span>
+                <span class="stat-value" id="stat-cargo-count">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">IN/OUT</span>
+                <span class="stat-value"><span id="stat-in">0</span> / <span id="stat-out">0</span></span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">CIĘŻARÓWKI</span>
+                <span class="stat-value" id="stat-trucks">0</span>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-start" id="btn-start" onclick="toggleSim(true)">START</button>
+            <button class="btn btn-pause btn-disabled" id="btn-pause" onclick="toggleSim(false)">PAUZA</button>
+        </div>
+    </footer>
+
+    <script src="js/script.js"></script>
+
+</body>
+</html>

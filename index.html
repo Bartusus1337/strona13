@@ -3,63 +3,572 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Santa Global Tracker</title>
-    <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <title>W.O.S. - System Główny</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #202028;
+            --terminal-green: #4ade80;
+            --accent-orange: #d97706;
+            --text-white: #fff;
+            --dark-panel: #111;
+            --border-style: 4px solid #000;
+            --shadow-style: 8px 8px 0px #000;
+            --input-bg: #1a1a1a;
+            /* Zmienna do sterowania pozycją wózka */
+            --scroll-pos: 0; 
+        }
+
+        html { scroll-behavior: smooth; }
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: var(--bg-color);
+            color: var(--text-white);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            image-rendering: pixelated;
+            padding-bottom: 70px; 
+        }
+
+        /* --- Efekt Monitora CRT --- */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        /* --- NAWIGACJA GÓRNA --- */
+        .top-nav {
+            background-color: var(--dark-panel);
+            border-bottom: var(--border-style);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-brand {
+            color: var(--terminal-green);
+            font-size: 0.8rem;
+            text-decoration: none;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .nav-links { display: flex; gap: 20px; }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            padding: 8px 12px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background-color: var(--terminal-green);
+            color: #000;
+            border: 2px solid #fff;
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        /* --- GŁÓWNA TREŚĆ --- */
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: var(--terminal-green);
+            text-shadow: 6px 6px 0px #000;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .subtitle {
+            font-size: 0.7rem;
+            color: #aaa;
+            letter-spacing: 2px;
+        }
+
+        .blink { animation: blinker 1s linear infinite; }
+
+        /* --- KAFLE MENU --- */
+        .menu-grid {
+            display: flex;
+            gap: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 80px;
+        }
+
+        .menu-card {
+            background-color: var(--dark-panel);
+            border: var(--border-style);
+            box-shadow: var(--shadow-style);
+            padding: 30px;
+            width: 300px;
+            text-align: center;
+            text-decoration: none;
+            color: #fff;
+            transition: transform 0.1s, box-shadow 0.1s;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .menu-card:hover {
+            transform: translate(4px, 4px);
+            box-shadow: 4px 4px 0px #000;
+            background-color: #1a1a1a;
+        }
+
+        .menu-card .icon-wrapper {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--accent-orange);
+            display: block;
+        }
+
+        .menu-card h2 {
+            font-size: 1rem;
+            margin-bottom: 15px;
+            color: var(--terminal-green);
+            line-height: 1.5;
+        }
+
+        .menu-card p {
+            font-size: 0.6rem;
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        .card-decoration {
+            height: 4px;
+            width: 100%;
+            background: repeating-linear-gradient(90deg, #333, #333 10px, transparent 10px, transparent 20px);
+            margin: 15px 0;
+        }
+
+        /* Styl kafelka oceny */
+        .menu-card.rating-card:hover { border-color: var(--accent-orange); }
+        .menu-card.rating-card .icon-wrapper { color: var(--accent-orange); }
+
+        /* --- SEKCJE INFORMACYJNE --- */
+        .info-section {
+            width: 100%;
+            margin-bottom: 80px;
+            padding: 40px;
+            background-color: var(--dark-panel);
+            border: var(--border-style);
+            box-shadow: var(--shadow-style);
+            position: relative;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px dashed #444;
+            padding-bottom: 10px;
+        }
+
+        .section-header h2 {
+            font-size: 1.2rem;
+            color: var(--terminal-green);
+            margin: 0;
+        }
+
+        .section-icon { margin-right: 15px; color: var(--accent-orange); }
+
+        .info-content p {
+            font-size: 0.7rem;
+            line-height: 2;
+            color: #ccc;
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        /* Lista Oferty */
+        .offer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .offer-item {
+            background: #222;
+            border: 2px solid #444;
+            padding: 15px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .offer-item i { margin-right: 10px; color: var(--terminal-green); }
+
+        /* --- FORMULARZ KONTAKTOWY --- */
+        .contact-form { display: flex; flex-direction: column; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 10px; }
+        .form-label { font-size: 0.7rem; color: var(--accent-orange); }
+
+        .retro-input {
+            background-color: var(--input-bg);
+            border: 2px solid #555;
+            color: var(--terminal-green);
+            font-family: 'Press Start 2P', cursive;
+            padding: 15px;
+            font-size: 0.8rem;
+            outline: none;
+            width: 100%;
+        }
+
+        .retro-input:focus {
+            border-color: var(--terminal-green);
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.2);
+        }
+
+        textarea.retro-input { resize: vertical; min-height: 120px; }
+
+        .submit-btn {
+            background-color: var(--terminal-green);
+            color: #000;
+            border: 4px solid #fff;
+            padding: 15px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.9rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 4px 4px 0 #000;
+            transition: transform 0.1s;
+            width: fit-content;
+            align-self: flex-end;
+        }
+
+        .submit-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0 #000;
+        }
+
+        /* --- STOPKA --- */
+        footer {
+            background-color: #000;
+            color: #555;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.5rem;
+            border-top: 2px solid #333;
+            margin-top: auto;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- ANIMACJE --- */
+        @keyframes blinker { 50% { opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- SEKCJA ANIMACJI WÓZKA (PRZYWRÓCONY WYGLĄD) --- */
+        .scroll-animation-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            pointer-events: none;
+            z-index: 9;
+            background-color: #2d3748;
+            background-image: linear-gradient(90deg, transparent 49px, rgba(255,255,255,0.1) 50px);
+            background-size: 50px 100%;
+            border-top: 4px solid #000;
+        }
+
+        /* Kontener przesuwający się */
+        .forklift-mover {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            /* Wózek przesuwa się od lewej do prawej w zależności od scrolla */
+            transform: translateX(calc(var(--scroll-pos) * (100vw - 60px)));
+            transition: transform 0.1s linear;
+        }
+
+        /* KLASYCZNY WÓZEK (Żółty, styl pixel-art) */
+        .pixel-forklift {
+            width: 60px;
+            height: 40px;
+            position: relative;
+        }
+
+        .pf-body {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            width: 45px;
+            height: 15px;
+            background-color: #fbbf24; /* Klasyczny żółty */
+            border: 2px solid #000;
+            z-index: 2;
+        }
+
+        .pf-cabin {
+            position: absolute;
+            bottom: 20px;
+            left: 10px;
+            width: 25px;
+            height: 18px;
+            border: 2px solid #000;
+            border-bottom: none;
+            background: transparent;
+            z-index: 1;
+        }
+        /* Dach kabiny */
+        .pf-cabin::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 4px;
+            background: #000;
+        }
+
+        .pf-mast {
+            position: absolute;
+            bottom: 5px;
+            right: 12px;
+            width: 4px;
+            height: 35px;
+            background-color: #333;
+            border: 1px solid #000;
+            z-index: 3;
+        }
+
+        .pf-forks {
+            position: absolute;
+            bottom: 5px;
+            right: -8px;
+            width: 20px;
+            height: 3px;
+            background-color: #555;
+            border: 1px solid #000;
+            z-index: 2;
+        }
+
+        .pf-wheels {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 12px;
+            z-index: 3;
+        }
+        .pf-wheels span {
+            position: absolute;
+            bottom: 0;
+            width: 12px;
+            height: 12px;
+            background-color: #000;
+            border: 2px solid #333;
+            border-radius: 2px;
+        }
+        .pf-wheels span:nth-child(1) { left: 5px; }
+        .pf-wheels span:nth-child(2) { left: 30px; }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 1.2rem; }
+            .menu-grid { gap: 20px; }
+            .menu-card { width: 100%; max-width: 350px; }
+            .top-nav { flex-direction: column; gap: 15px; }
+            .info-section { padding: 20px; }
+            .submit-btn { width: 100%; }
+        }
+    </style>
 </head>
 <body>
 
-    <nav class="navbar">
-        <div class="logo">Santa<span>Route</span> 🎅</div>
-        <div class="nav-status">Status systemu: <span class="status-ok">ONLINE</span></div>
+    <nav class="top-nav">
+        <a href="index.html" class="nav-brand"><i class="fas fa-microchip"></i> W.O.S. SYSTEM</a>
+        <div class="nav-links">
+            <a href="index.html" class="active">MENU</a>
+            <a href="demo.html">PLAN</a>
+            <a href="game.html">GRA</a>
+            <a href="rating.html">OCEŃ NAS</a>
+        </div>
     </nav>
 
-    <main class="dashboard-container">
+    <div class="main-container">
         
-        <header class="dashboard-header fade-in">
-            <h1>Globalny Monitoring Trasy</h1>
-            <p>Klikaj na kraje na mapie, aby potwierdzić dostarczenie prezentów.</p>
+        <header>
+            <h1>WAREHOUSE<br>OPERATING<br>SYSTEM</h1>
+            <div class="subtitle">WYBIERZ MODUŁ...<span class="blink">_</span></div>
         </header>
 
-        <div class="stats-bar fade-in">
-            <div class="stat-card">
-                <div class="icon">🌍</div>
-                <div class="stat-info">
-                    <span class="label">Liczba krajów na świecie</span>
-                    <span class="value" id="total-countries">0</span>
-                </div>
-            </div>
+        <div class="menu-grid">
             
-            <div class="stat-card highlight">
-                <div class="icon">🎁</div>
-                <div class="stat-info">
-                    <span class="label">Odwiedzone kraje</span>
-                    <span class="value" id="visited-countries">0</span>
-                </div>
-            </div>
+            <a href="demo.html" class="menu-card">
+                <span class="icon-wrapper"><i class="fas fa-warehouse"></i></span>
+                <h2>ZARZĄDZANIE MAGAZYNEM</h2>
+                <div class="card-decoration"></div>
+                <p>PODGLĄD STANU PALET<br>MAPA REGAŁÓW<br>DOKI ROZŁADUNKOWE</p>
+            </a>
 
-            <div class="stat-card">
-                <div class="icon">⏳</div>
-                <div class="stat-info">
-                    <span class="label">Pozostało</span>
-                    <span class="value" id="remaining-countries">0</span>
-                </div>
-            </div>
+            <a href="game.html" class="menu-card">
+                <span class="icon-wrapper"><i class="fas fa-truck-loading"></i></span>
+                <h2>SYMULATOR OPERATORA</h2>
+                <div class="card-decoration"></div>
+                <p>SZKOLENIE PRAKTYCZNE<br>ZBIERANIE ŁADUNKÓW<br>RANKING PRACOWNIKÓW</p>
+            </a>
+
+            <a href="rating.html" class="menu-card rating-card">
+                <span class="icon-wrapper"><i class="fas fa-star"></i></span>
+                <h2>OCEŃ NASZĄ WSPÓŁPRACĘ</h2>
+                <div class="card-decoration"></div>
+                <p>PRZEKAŻ FEEDBACK<br>SYSTEM OCEN<br>DLA ADMINISTRATORA</p>
+            </a>
             
-            <button id="reset-btn" class="btn-reset">Resetuj Trasę ↻</button>
         </div>
 
-        <div id="map-wrapper" class="map-container fade-in">
-            <div class="map-decoration-text">World Map Visualization</div>
-        </div>
+        <section id="about" class="info-section">
+            <div class="section-header">
+                <i class="fas fa-info-circle section-icon"></i>
+                <h2>> SYSTEM_INFO / O NAS</h2>
+            </div>
+            <div class="info-content">
+                <p>
+                    Witaj w Smart Warehouse Inc. Jesteśmy pionierami w dziedzinie cyfrowej logistyki w stylu retro.
+                    Wierzymy, że prostota interfejsu z lat 90. w połączeniu z nowoczesną chmurą obliczeniową to
+                    klucz do wydajności.
+                </p>
+                <p>
+                    Naszą misją jest eliminacja chaosu magazynowego poprzez pikselową precyzję. Nasz system W.O.S.
+                    obsługuje największe hale magazynowe, zapewniając zerowe opóźnienia i maksymalną satysfakcję operatorów wózków widłowych.
+                </p>
+                <p style="color: var(--accent-orange)">
+                    [STATUS: OPERACYJNY] [DOSTĘPNOŚĆ: 99.9%] [ROK ZAŁOŻENIA: 2025]
+                </p>
+            </div>
+        </section>
 
-    </main>
+        <section id="offer" class="info-section">
+            <div class="section-header">
+                <i class="fas fa-cubes section-icon"></i>
+                <h2>> MODULES / OFERTA</h2>
+            </div>
+            <div class="info-content">
+                <p>Nasz system jest modułowy. Wybierz rozszerzenia, które pasują do Twojej infrastruktury:</p>
+                
+                <div class="offer-grid">
+                    <div class="offer-item">
+                        <i class="fas fa-check-square"></i> WIZUALIZACJA 2D HALI
+                    </div>
+                    <div class="offer-item">
+                        <i class="fas fa-check-square"></i> SYMULATOR SZKOLENIOWY
+                    </div>
+                    <div class="offer-item">
+                        <i class="fas fa-check-square"></i> INTEGRACJA API / JSON
+                    </div>
+                    <div class="offer-item">
+                        <i class="fas fa-check-square"></i> ANALIZA ZAJĘTOŚCI MIEJSC
+                    </div>
+                    <div class="offer-item">
+                        <i class="fas fa-check-square"></i> OBSŁUGA SKANERÓW KODÓW
+                    </div>
+                    <div class="offer-item">
+                        <i class="fas fa-check-square"></i> RAPORTY WYDAJNOŚCI
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contact" class="info-section">
+            <div class="section-header">
+                <i class="fas fa-envelope-open-text section-icon"></i>
+                <h2>> INPUT_DATA / KONTAKT</h2>
+            </div>
+            <div class="info-content">
+                <p style="margin-bottom: 30px;">Skonfiguruj połączenie z naszym działem wsparcia. Wypełnij poniższy protokół transmisji:</p>
+                
+                <form class="contact-form" onsubmit="event.preventDefault(); alert('TRANSMISJA DANYCH ZAKOŃCZONA POWODZENIEM.');">
+                    <div class="form-group">
+                        <label class="form-label">ID_UŻYTKOWNIKA (IMIĘ):</label>
+                        <input type="text" class="retro-input" placeholder="Wpisz identyfikator...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ADRES_SIECIOWY (EMAIL):</label>
+                        <input type="email" class="retro-input" placeholder="user@net.pl">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">PAKIET_DANYCH (WIADOMOŚĆ):</label>
+                        <textarea class="retro-input" placeholder="Wprowadź treść zgłoszenia..."></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">WYŚLIJ PAKIET</button>
+                </form>
+            </div>
+        </section>
+
+    </div>
+
+    <div class="scroll-animation-container">
+        <div class="forklift-mover" id="forklift">
+            <div class="pixel-forklift">
+                <div class="pf-cabin"></div>
+                <div class="pf-body"></div>
+                <div class="pf-mast"></div>
+                <div class="pf-forks"></div>
+                <div class="pf-wheels">
+                    <span></span> <span></span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer>
-        <p>&copy; 2024 SantaRoute Dashboard. Dane zapisywane lokalnie.</p>
+        SYSTEM ONLINE v1.0.5 | © 2025 SMART WAREHOUSE INC. | ALL RIGHTS RESERVED
     </footer>
 
-    <script src="main.js"></script>
-    <script src="demo.js"></script>
+    <script>
+        // Prosty skrypt dla scrolla tylko w tym pliku
+        window.addEventListener('scroll', () => {
+            const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight;
+            const clientHeight = document.documentElement.clientHeight;
+            
+            const maxScroll = scrollHeight - clientHeight;
+            const scrollPercent = maxScroll > 0 ? scrollTop / maxScroll : 0;
+
+            document.documentElement.style.setProperty('--scroll-pos', scrollPercent);
+        });
+    </script>
+
 </body>
 </html>

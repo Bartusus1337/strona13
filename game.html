@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+ <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+    <link rel="stylesheet" href="css/style.css">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symulator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #202028;
+            --terminal-green: #4ade80;
+            --box-brown: #d97706;
+            --danger-red: #ef4444;
+            --text-white: #fff;
+            --ui-border: 4px solid #000;
+            --dark-panel: #111;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: var(--bg-color);
+            color: var(--text-white);
+            margin: 0;
+            padding: 0; /* Zmieniono na 0, aby pasek dotykał krawędzi */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            image-rendering: pixelated;
+            min-height: 100vh;
+        }
+
+        /* --- Efekt monitora CRT --- */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        /* --- NAWIGACJA GÓRNA (Skopiowana z index.html) --- */
+        .top-nav {
+            width: 100%;
+            background-color: var(--dark-panel);
+            border-bottom: var(--ui-border);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            margin-bottom: 20px;
+        }
+
+        .nav-brand {
+            color: var(--terminal-green);
+            font-size: 0.8rem;
+            text-decoration: none;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        .nav-links { display: flex; gap: 20px; }
+
+        .nav-btn {
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            padding: 8px 12px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background-color: var(--terminal-green);
+            color: #000;
+            border: 2px solid #fff;
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        /* --- TYTUŁ --- */
+        h1 { 
+            font-size: 1.1rem; 
+            color: var(--terminal-green); 
+            text-shadow: 3px 3px 0px #000; 
+            margin: 0 0 20px 0; 
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        /* --- UKŁAD GŁÓWNY --- */
+        .main-wrapper {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            flex-wrap: wrap; 
+            justify-content: center;
+            padding: 0 10px 20px 10px; /* Padding przeniesiony tutaj */
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .game-container { position: relative; }
+
+        canvas {
+            border: var(--ui-border);
+            background-color: #5d6475; /* Beton */
+            box-shadow: 8px 8px 0px #000;
+            max-width: 100%; 
+            display: block;
+        }
+
+        /* --- TABELA WYNIKÓW --- */
+        .leaderboard {
+            background: #000;
+            border: var(--ui-border);
+            padding: 15px;
+            width: 280px;
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.5);
+        }
+
+        .leaderboard h2 {
+            font-size: 0.7rem;
+            color: #fbbf24;
+            margin-top: 0;
+            text-align: center;
+            border-bottom: 2px dashed #333;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .score-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.6rem;
+            color: #ccc;
+            border-bottom: 1px solid #222;
+            padding-bottom: 4px;
+        }
+        
+        .score-item span:first-child { color: var(--terminal-green); text-transform: uppercase;}
+        .score-item span:last-child { color: #fff; }
+
+        /* --- HUD --- */
+        .hud-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #000;
+            padding: 8px;
+            border: var(--ui-border);
+            margin-bottom: 5px;
+            font-size: 0.7rem;
+        }
+        #lives-val { color: var(--danger-red); letter-spacing: 2px; }
+
+        /* --- EKRANY OVERLAY --- */
+        .overlay-screen {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            border: var(--ui-border);
+            padding: 20px;
+            text-align: center;
+            z-index: 100;
+            width: 85%;
+            display: none; 
+        }
+        #start-screen { display: block; }
+
+        .btn-retro {
+            margin-top: 15px;
+            padding: 12px 15px;
+            font-family: inherit;
+            background: var(--terminal-green);
+            color: #000;
+            border: 4px solid #fff;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 4px 4px 0px #000;
+            font-size: 0.8rem;
+        }
+        .btn-retro:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px #000; }
+
+        /* Input dla Nicku */
+        .retro-input {
+            background: #333;
+            border: 2px solid #fff;
+            color: var(--terminal-green);
+            font-family: inherit;
+            font-size: 1rem;
+            padding: 10px;
+            width: 80%;
+            text-transform: uppercase;
+            text-align: center;
+            margin: 15px 0;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .retro-input:focus { outline: none; background: #222; border-color: var(--terminal-green); }
+
+        /* --- CONTROLS MOBILE --- */
+        .mobile-controls {
+            display: none;
+            margin-top: 15px;
+            gap: 15px;
+            width: 100%;
+            justify-content: center;
+            padding: 0 10px;
+        }
+        .btn-ctrl {
+             padding: 15px 20px; font-family: inherit; font-size: 1rem;
+             background: #333; color: white; border: var(--ui-border); 
+             box-shadow: 4px 4px 0 #000; flex: 1;
+        }
+        
+        @media (max-width: 850px) {
+             .mobile-controls { display: flex; }
+             .leaderboard { width: 100%; max-width: 400px; order: 2; }
+             .main-wrapper { flex-direction: column; align-items: center; }
+             .top-nav { flex-direction: column; gap: 15px; }
+        }
+    </style>
+</head>
+<body class="noscroll">
+
+    <nav class="top-nav">
+        <a href="index.html" class="nav-brand"><i class="fas fa-microchip"></i> W.O.S. SYSTEM</a>
+        <div class="nav-links">
+            <a href="index.html">MENU</a>
+            <a href="demo.html" class="active">PLAN</a>
+            <a href="game.html">GRA</a>
+            <a href="rating.html">OCEŃ NAS</a>
+        </div>
+    </nav>
+
+    <h1>MAGAZYN DELUXE v2.0</h1>
+
+    <div class="main-wrapper">
+        
+        <div class="game-container">
+            <div class="hud-bar">
+                <span>PKT: <span id="score-val">0</span></span>
+                <span id="lives-val">❤❤❤</span>
+            </div>
+
+            <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+            <div id="start-screen" class="overlay-screen">
+                <h2 style="color: var(--terminal-green)">WÓZKOWY RAJD</h2>
+                <p style="font-size: 0.55rem; line-height: 1.6; color: #ccc; margin-bottom: 20px;">
+                    STEROWANIE: STRZAŁKI / PRZYCISKI<br>
+                    <span style="color:#d97706">PACZKA</span> = 50 PKT<br>
+                    <span style="color:#ef4444">❤</span> = EXTRA ŻYCIE (RZADKIE!)<br>
+                    UNIKAJ PRZESZKÓD!
+                </p>
+                <button class="btn-retro" onclick="startGame()">URUCHOM SILNIK</button>
+            </div>
+
+            <div id="game-over-screen" class="overlay-screen">
+                <h2 style="color: var(--danger-red)">AWARIA!</h2>
+                <p>WYNIK KOŃCOWY: <span id="final-score" style="color:#fff">0</span></p>
+                
+                <div id="input-section">
+                    <p style="font-size: 0.6rem; margin-top: 20px;">PODAJ SWÓJ NICK:</p>
+                    <input type="text" id="player-nick" class="retro-input" maxlength="10" placeholder="AAA">
+                    <button class="btn-retro" onclick="submitScore()">ZAPISZ I GRAJ</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="leaderboard">
+            <h2>TOP 10 MAGAZYNIEROW</h2>
+            <ul class="score-list" id="score-list">
+                <li class="score-item" style="text-align: center;">ŁADOWANIE DANYCH...</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="mobile-controls">
+        <button class="btn-ctrl" onclick="movePlayer(-1)">← LEWO</button>
+        <button class="btn-ctrl" onclick="movePlayer(1)">PRAWO →</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score-val');
+        const livesEl = document.getElementById('lives-val');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreEl = document.getElementById('final-score');
+        const scoreListEl = document.getElementById('score-list');
+        const nickInput = document.getElementById('player-nick');
+
+        // --- KONFIGURACJA ---
+        const LANES_COUNT = 5;
+        const LANE_WIDTH = canvas.width / LANES_COUNT;
+        
+        let gameRunning = false;
+        let gameSpeed = 2.0; 
+        let movementLerp = 0.04; 
+        let score = 0;
+        let lives = 3;
+        let distance = 0;
+        let frameCount = 0;
+        let gameObjects = [];
+
+        const player = {
+            width: 40,
+            height: 60,
+            x: 0,
+            y: canvas.height - 100,
+            currentLane: 2,
+            targetX: 0
+        };
+
+        // --- INICJALIZACJA ---
+        function init() {
+            updateLeaderboardDisplay();
+            drawBackground();
+            drawPlayer(); 
+        }
+
+        function startGame() {
+            score = 0;
+            lives = 3;
+            gameSpeed = 2.0; 
+            movementLerp = 0.04; 
+            distance = 0;
+            frameCount = 0;
+            gameObjects = [];
+            gameRunning = true;
+            
+            player.currentLane = 2;
+            player.targetX = player.currentLane * LANE_WIDTH + (LANE_WIDTH - player.width) / 2;
+            player.x = player.targetX;
+
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            nickInput.value = ''; 
+            updateHUD();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!gameRunning) return;
+            if (e.key === 'ArrowLeft') movePlayer(-1);
+            if (e.key === 'ArrowRight') movePlayer(1);
+        });
+
+        function movePlayer(direction) {
+            if (!gameRunning) return;
+            player.currentLane = Math.max(0, Math.min(LANES_COUNT - 1, player.currentLane + direction));
+            player.targetX = player.currentLane * LANE_WIDTH + (LANE_WIDTH - player.width) / 2;
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            frameCount++;
+            updateLogic();
+            drawScene();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function updateLogic() {
+            player.x += (player.targetX - player.x) * movementLerp;
+
+            distance += gameSpeed;
+            if (frameCount % 60 === 0) score += 1; 
+            
+            if (frameCount % 500 === 0) {
+                gameSpeed = Math.min(gameSpeed + 0.3, 10); 
+                movementLerp = Math.min(movementLerp + 0.005, 0.15); 
+            }
+
+            let spawnRate = Math.max(40, 90 - Math.floor(gameSpeed * 5));
+            if (frameCount % spawnRate === 0) spawnObject();
+
+            gameObjects.forEach(obj => obj.y += gameSpeed);
+            gameObjects = gameObjects.filter(obj => obj.y < canvas.height + 100);
+
+            checkCollisions();
+            updateHUD();
+        }
+
+        function spawnObject() {
+            const lane = Math.floor(Math.random() * LANES_COUNT);
+            const spawnX = lane * LANE_WIDTH + (LANE_WIDTH - 40)/2;
+            const rand = Math.random();
+            
+            let type = 'cargo'; 
+            
+            if (rand > 0.97) {
+                type = 'heart'; 
+            } else if (rand > 0.55) {
+                const obsType = Math.random();
+                if(obsType < 0.25) type = 'person';
+                else if(obsType < 0.50) type = 'rack';
+                else if(obsType < 0.75) type = 'oil';
+                else type = 'barrier';
+            } else {
+                type = 'cargo';
+            }
+            
+            gameObjects.push({
+                x: spawnX,
+                y: -60,
+                width: 40,
+                height: 40,
+                type: type,
+                processed: false
+            });
+        }
+
+        function checkCollisions() {
+             gameObjects.forEach(obj => {
+                if (obj.processed) return;
+                const padding = 8; 
+
+                if (player.x + padding < obj.x + obj.width - padding &&
+                    player.x + player.width - padding > obj.x + padding &&
+                    player.y + padding < obj.y + obj.height - padding &&
+                    player.y + player.height - padding > obj.y + padding) {
+                    
+                    obj.processed = true;
+
+                    if (obj.type === 'cargo') {
+                        score += 50;
+                        obj.y = canvas.height + 200; 
+                    } else if (obj.type === 'heart') {
+                        if (lives < 3) lives++; 
+                        score += 100; 
+                        obj.y = canvas.height + 200;
+                    } else {
+                        handleCrash(obj);
+                    }
+                }
+            });
+        }
+
+        function handleCrash(obj) {
+            lives--;
+            obj.y = canvas.height + 200;
+            canvas.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px)`;
+            setTimeout(() => canvas.style.transform = "none", 100);
+            if (lives <= 0) endGame();
+        }
+
+        function endGame() {
+            gameRunning = false;
+            finalScoreEl.innerText = score;
+            gameOverScreen.style.display = 'block';
+            nickInput.focus();
+        }
+
+        function drawScene() {
+            drawBackground();
+            drawGameObjects();
+            drawPlayer(); 
+        }
+
+        function drawBackground() {
+            ctx.fillStyle = '#5d6475';
+            ctx.fillRect(0,0,canvas.width, canvas.height);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([10, 15]);
+            ctx.lineDashOffset = -distance % 25;
+
+            for (let i = 1; i < LANES_COUNT; i++) {
+                let x = i * LANE_WIDTH;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]);
+        }
+
+        function drawPlayer() {
+            const x = player.x; const y = player.y;
+            ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(x+5, y+55, 30, 5);
+            ctx.fillStyle = '#f59e0b'; ctx.fillRect(x, y+25, 40, 30);
+            ctx.fillStyle = '#1f2937'; ctx.fillRect(x+5, y+10, 30, 15);
+            ctx.fillStyle = '#60a5fa'; ctx.fillRect(x+8, y+12, 24, 10);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(x+10, y-5, 5, 30); ctx.fillRect(x+25, y-5, 5, 30);
+            ctx.fillRect(x+5, y+50, 8, 12); ctx.fillRect(x+27, y+50, 8, 12);
+        }
+
+        function drawGameObjects() {
+            gameObjects.forEach(obj => {
+                if(obj.type === 'cargo') {
+                    ctx.fillStyle = '#d97706'; ctx.fillRect(obj.x, obj.y, 40, 40);
+                    ctx.strokeStyle = '#78350f'; ctx.lineWidth=3; ctx.strokeRect(obj.x, obj.y, 40, 40);
+                    ctx.beginPath(); ctx.moveTo(obj.x, obj.y); ctx.lineTo(obj.x+40, obj.y+40); ctx.stroke();
+                } else if (obj.type === 'heart') {
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath();
+                    ctx.moveTo(obj.x + 20, obj.y + 10);
+                    ctx.bezierCurveTo(obj.x + 20, obj.y + 7, obj.x + 10, obj.y, obj.x + 5, obj.y + 10);
+                    ctx.bezierCurveTo(obj.x - 5, obj.y + 25, obj.x + 20, obj.y + 35, obj.x + 20, obj.y + 35);
+                    ctx.bezierCurveTo(obj.x + 20, obj.y + 35, obj.x + 45, obj.y + 25, obj.x + 35, obj.y + 10);
+                    ctx.bezierCurveTo(obj.x + 30, obj.y, obj.x + 20, obj.y + 7, obj.x + 20, obj.y + 10);
+                    ctx.fill();
+                } else if (obj.type === 'person') {
+                    ctx.fillStyle = '#fca5a5'; ctx.fillRect(obj.x+12, obj.y, 16, 12); 
+                    ctx.fillStyle = '#ef4444'; ctx.fillRect(obj.x+8, obj.y+12, 24, 16); 
+                    ctx.fillStyle = '#1e3a8a'; ctx.fillRect(obj.x+10, obj.y+28, 8, 12); ctx.fillRect(obj.x+22, obj.y+28, 8, 12); 
+                } else if (obj.type === 'rack') {
+                    ctx.fillStyle = '#334155'; ctx.fillRect(obj.x, obj.y, 40, 40);
+                    ctx.fillStyle = '#0f172a'; ctx.fillRect(obj.x+2, obj.y+5, 36, 10); ctx.fillRect(obj.x+2, obj.y+25, 36, 10);
+                } else if (obj.type === 'oil') {
+                    ctx.fillStyle = '#111'; 
+                    ctx.beginPath();
+                    ctx.ellipse(obj.x + 20, obj.y + 25, 18, 10, 0, 0, 2 * Math.PI);
+                    ctx.fill();
+                    ctx.fillStyle = '#333'; 
+                    ctx.beginPath(); ctx.ellipse(obj.x + 15, obj.y + 22, 5, 2, 0, 0, 2 * Math.PI); ctx.fill();
+                } else if (obj.type === 'barrier') {
+                    ctx.fillStyle = '#fbbf24'; ctx.fillRect(obj.x, obj.y+10, 40, 20);
+                    ctx.fillStyle = '#000';
+                    ctx.beginPath();
+                    ctx.moveTo(obj.x+10, obj.y+10); ctx.lineTo(obj.x, obj.y+30); ctx.lineTo(obj.x+5, obj.y+30); ctx.lineTo(obj.x+15, obj.y+10);
+                    ctx.moveTo(obj.x+30, obj.y+10); ctx.lineTo(obj.x+20, obj.y+30); ctx.lineTo(obj.x+25, obj.y+30); ctx.lineTo(obj.x+35, obj.y+10);
+                    ctx.fill();
+                    ctx.fillStyle='#555'; ctx.fillRect(obj.x+5, obj.y+30, 4, 10); ctx.fillRect(obj.x+31, obj.y+30, 4, 10);
+                }
+            });
+        }
+
+        function updateHUD() {
+            scoreEl.innerText = score;
+            let hearts = '';
+            for(let i=0; i<lives; i++) hearts += '❤';
+            livesEl.innerText = hearts;
+        }
+
+        function submitScore() {
+            let nick = nickInput.value.trim().toUpperCase();
+            if (!nick) nick = "NONAME";
+            let scores = JSON.parse(localStorage.getItem('pixelWarehouseScoresDeluxe')) || [];
+            scores.push({ name: nick, score: score });
+            scores.sort((a, b) => b.score - a.score);
+            scores = scores.slice(0, 10);
+            localStorage.setItem('pixelWarehouseScoresDeluxe', JSON.stringify(scores));
+            
+            updateLeaderboardDisplay(); // Odśwież tabelę natychmiast
+            startGame();
+        }
+
+        function updateLeaderboardDisplay() {
+            const scores = JSON.parse(localStorage.getItem('pixelWarehouseScoresDeluxe')) || [];
+            scoreListEl.innerHTML = '';
+            if (scores.length === 0) {
+                scoreListEl.innerHTML = '<li class="score-item" style="justify-content:center">BRAK DANYCH</li>';
+                return;
+            }
+            scores.forEach((entry, index) => {
+                const li = document.createElement('li');
+                li.className = 'score-item';
+                li.innerHTML = `<span>${index + 1}. ${entry.name}</span><span>${entry.score} PKT</span>`;
+                scoreListEl.appendChild(li);
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>

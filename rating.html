@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W.O.S. - Oceń Nas</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        /* --- STYLE SPECYFICZNE DLA PODSTRONY OCENY --- */
+        
+        /* Blokada scrolla dla tej podstrony */
+        body {
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Kontener treści */
+        .rating-content {
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start;
+            padding-top: 40px; 
+            position: relative;
+            /* Tło specyficzne dla ocen */
+            background-image: 
+                linear-gradient(rgba(74, 222, 128, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(74, 222, 128, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            width: 100%;
+        }
+
+        .rating-title {
+            color: var(--terminal-green); 
+            font-size: 1.5rem; 
+            margin-bottom: 20px; 
+            text-shadow: 4px 4px 0 #000; 
+            text-align: center; 
+            line-height: 1.5; 
+            z-index: 50;
+        }
+
+        .rating-desc {
+            font-size: 0.7rem; 
+            color: #888; 
+            margin-bottom: 20px; 
+            max-width: 600px; 
+            text-align: center; 
+            line-height: 1.8; 
+            z-index: 50;
+        }
+
+        /* Obszar, po którym latają przyciski */
+        .rating-area {
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            overflow: hidden; 
+            z-index: 10;
+        }
+
+        /* Przyciski Ocen */
+        .rate-btn {
+            font-family: 'Press Start 2P', cursive; 
+            width: 80px; height: 80px; 
+            border: 4px solid #fff;
+            font-size: 1.5rem; 
+            cursor: pointer; 
+            box-shadow: 6px 6px 0 #000; 
+            position: absolute;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            z-index: 20;
+            /* Brak transition dla płynności fizyki JS */
+        }
+
+        .rate-btn.bad {
+            background-color: var(--danger-red); 
+            color: #fff;
+        }
+        
+        .rate-btn.good {
+            background-color: var(--terminal-green); 
+            color: #000; 
+            left: 50%; top: 65%; /* Wyjściowa pozycja 5 */
+            transform: translate(-50%, -50%); 
+            z-index: 30;
+            width: 100px; height: 100px; 
+            font-size: 2rem; 
+            animation: pulse-grow 2s infinite alternate;
+        }
+
+        .rate-btn:active {
+            transform: translate(2px, 2px); 
+            box-shadow: 2px 2px 0 #000;
+        }
+
+        @keyframes pulse-grow {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <a href="index.html" class="nav-brand"><i class="fas fa-microchip"></i> W.O.S. SYSTEM</a>
+        <div class="nav-links">
+            <a href="index.html">MENU</a>
+            <a href="demo.html">PLAN</a>
+            <a href="game.html">GRA</a>
+            <a href="rating.html" class="active">OCEŃ NAS</a>
+        </div>
+    </nav>
+
+    <div class="rating-content">
+        <h1 class="rating-title">OCEŃ SYSTEM W.O.S.</h1>
+        <p class="rating-desc">Twoja opinia jest dla nas niezwykle cenna.<br>Prosimy o szczerą ocenę wydajności systemu.</p>
+
+        <div class="rating-area" id="area">
+            <button class="rate-btn bad" id="btn-2">2</button>
+            <button class="rate-btn bad" id="btn-3">3</button>
+            <button class="rate-btn bad" id="btn-4">4</button>
+            
+            <button class="rate-btn good" id="btn-5" onclick="submitRating()">5</button>
+        </div>
+    </div>
+
+    <div class="modal" id="success-modal">
+        <h2>DZIĘKUJEMY!</h2>
+        <p>Cieszymy się, że system działa perfekcyjnie.</p>
+        <p>Twoja ocena (5/5) została zapisana.</p>
+        <button onclick="window.location.href='demo.html'">WRÓĆ DO PRACY</button>
+    </div>
+
+    <script>
+        // --- PARAMETRY FIZYKI ---
+        const MOUSE_REPULSION_DIST = 180; // Dystans aktywacji chaosu
+        const PEER_REPULSION_DIST = 150;  // Odpychanie od siebie
+        const BASE_SPEED = 4;             
+        const MAX_SPEED = 14;             
+        const WALL_PADDING = 10;          
+
+        const area = document.getElementById('area');
+        const btn5 = document.getElementById('btn-5');
+        
+        let movers = [];
+        let mouseX = -1000, mouseY = -1000;
+        let scale5 = 1.0;
+        let growDir = 1;
+
+        // Klasa obiektu ruchomego
+        class Mover {
+            constructor(id, startX, startY) {
+                this.el = document.getElementById(id);
+                this.width = 80;
+                this.height = 80;
+                
+                // Pozycja startowa
+                this.x = startX;
+                this.y = startY;
+
+                // Czy przycisk został już "spłoszony"?
+                this.active = false;
+
+                // Wektory prędkości
+                this.vx = 0;
+                this.vy = 0;
+            }
+
+            update() {
+                // Środek przycisku
+                const centerX = this.x + this.width/2;
+                const centerY = this.y + this.height/2;
+
+                // Relacja z myszką
+                const rect = area.getBoundingClientRect();
+                const localMouseX = mouseX - rect.left;
+                const localMouseY = mouseY - rect.top;
+                const dx = centerX - localMouseX;
+                const dy = centerY - localMouseY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                // STAN 1: NIEAKTYWNY (Stoi w linii)
+                if (!this.active) {
+                    this.el.style.left = this.x + 'px';
+                    this.el.style.top = this.y + 'px';
+
+                    // Aktywacja po zbliżeniu myszki
+                    if (dist < MOUSE_REPULSION_DIST) {
+                        this.active = true;
+                        // Eksplozja ruchu
+                        this.vx = (Math.random() - 0.5) * 20; 
+                        this.vy = (Math.random() - 0.5) * 20; 
+                    }
+                    return; 
+                }
+
+                // STAN 2: AKTYWNY (Chaos)
+
+                // 1. Odbijanie od ścian
+                const maxX = area.offsetWidth - this.width - WALL_PADDING;
+                const maxY = area.offsetHeight - this.height - WALL_PADDING;
+
+                if (this.x <= WALL_PADDING) { this.x = WALL_PADDING; this.vx *= -1; }
+                if (this.x >= maxX) { this.x = maxX; this.vx *= -1; }
+                if (this.y <= WALL_PADDING) { this.y = WALL_PADDING; this.vy *= -1; }
+                if (this.y >= maxY) { this.y = maxY; this.vy *= -1; }
+
+                // 2. Ucieczka przed myszką
+                if (dist < MOUSE_REPULSION_DIST) {
+                    const force = (MOUSE_REPULSION_DIST - dist) / MOUSE_REPULSION_DIST; 
+                    this.vx += (dx / dist) * force * 2.5; 
+                    this.vy += (dy / dist) * force * 2.5;
+                }
+
+                // 3. Odpychanie od kolegów
+                movers.forEach(other => {
+                    if (other === this) return;
+                    
+                    const odx = this.x - other.x;
+                    const ody = this.y - other.y;
+                    const odist = Math.sqrt(odx*odx + ody*ody);
+
+                    if (odist < PEER_REPULSION_DIST) {
+                        const push = (PEER_REPULSION_DIST - odist) / PEER_REPULSION_DIST;
+                        this.vx += (odx / odist) * push * 1.5;
+                        this.vy += (ody / odist) * push * 1.5;
+                        
+                        // Reakcja łańcuchowa (budzenie innych)
+                        if (!other.active && this.active) {
+                            other.active = true;
+                            other.vx = this.vx * 0.8;
+                            other.vy = this.vy * 0.8;
+                        }
+                    }
+                });
+
+                // 4. Losowość
+                if (Math.random() < 0.05) {
+                    this.vx += (Math.random() - 0.5) * 4;
+                    this.vy += (Math.random() - 0.5) * 4;
+                }
+
+                // 5. Limit prędkości
+                const speed = Math.sqrt(this.vx*this.vx + this.vy*this.vy);
+                if (speed > MAX_SPEED) {
+                    this.vx = (this.vx / speed) * MAX_SPEED;
+                    this.vy = (this.vy / speed) * MAX_SPEED;
+                }
+                if (speed < BASE_SPEED) {
+                    this.vx *= 1.1;
+                    this.vy *= 1.1;
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                this.el.style.left = this.x + 'px';
+                this.el.style.top = this.y + 'px';
+            }
+        }
+
+        function init() {
+            // Ustawienie początkowe w linii
+            const centerY = window.innerHeight * 0.45; 
+            const centerX = window.innerWidth / 2;
+            const gap = 120; // Odstęp
+
+            movers = [
+                new Mover('btn-2', centerX - gap - 40, centerY - 40),
+                new Mover('btn-3', centerX - 40, centerY - 40),
+                new Mover('btn-4', centerX + gap - 40, centerY - 40)
+            ];
+            
+            animate();
+        }
+
+        function animate() {
+            movers.forEach(m => m.update());
+
+            // Pulsowanie przycisku 5
+            scale5 += (0.002 * growDir);
+            if (scale5 > 1.3) growDir = -1;
+            if (scale5 < 0.9) growDir = 1;
+            btn5.style.transform = `translate(-50%, -50%) scale(${scale5})`;
+
+            requestAnimationFrame(animate);
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function submitRating() {
+            const modal = document.getElementById('success-modal');
+            modal.classList.add('show');
+        }
+
+        window.addEventListener('resize', init);
+        window.onload = init;
+
+    </script>
+</body>
+</html>
