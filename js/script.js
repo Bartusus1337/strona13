@@ -533,3 +533,21 @@ function initGamePage() {
     // Jeśli jej nie masz, skrypt zadziała (pusta funkcja), ale gra nie ruszy.
     console.log("Gra zainicjalizowana");
 }
+window.addEventListener('scroll', () => {
+    const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const clientHeight = document.documentElement.clientHeight;
+    
+    const maxScroll = scrollHeight - clientHeight;
+    const scrollPercent = maxScroll > 0 ? scrollTop / maxScroll : 0;
+
+    document.documentElement.style.setProperty('--scroll-pos', scrollPercent);
+
+    // Dynamiczne sprawdzanie pozycji
+    const dzik = document.getElementById('easter-egg-link');
+    if (scrollPercent > 0.95) {
+        dzik.classList.add('visible');
+    } else {
+        dzik.classList.remove('visible');
+    }
+});

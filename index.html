@@ -412,6 +412,29 @@
             .info-section { padding: 20px; }
             .submit-btn { width: 100%; }
         }
+/* Styl dla puszki Dzika */
+#easter-egg-link {
+    position: absolute;
+    right: auto;      /* Pozycja przy widłach wózka */
+    left: -35px;
+    bottom: 15px;      /* Wysokość nad ziemią */
+    opacity: 0;        /* Domyślnie niewidoczny */
+    transition: opacity 0.3s ease;
+    pointer-events: none; /* Nieklikalny, gdy niewidoczny */
+    z-index: 10;
+}
+
+#easter-egg-link img {
+    width: 35px;       /* TUTAJ ustawiamy mały rozmiar puszki */
+    height: auto;
+    image-rendering: pixelated; /* Zachowuje styl retro */
+}
+
+/* Klasa aktywowana przez JavaScript na końcu strony */
+#easter-egg-link.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
     </style>
 </head>
 <body>
@@ -540,35 +563,48 @@
 
     <div class="scroll-animation-container">
         <div class="forklift-mover" id="forklift">
-            <div class="pixel-forklift">
-                <div class="pf-cabin"></div>
-                <div class="pf-body"></div>
-                <div class="pf-mast"></div>
-                <div class="pf-forks"></div>
-                <div class="pf-wheels">
-                    <span></span> <span></span>
-                </div>
-            </div>
+    <a href="easteregg.html" id="easter-egg-link">
+       <img src="img/dzik.png" alt="Dzik Energy">
+    </a>
+    
+    <div class="pixel-forklift">
+        <div class="pf-cabin"></div>
+        <div class="pf-body"></div>
+        <div class="pf-mast"></div>
+        <div class="pf-forks"></div>
+        <div class="pf-wheels">
+            <span></span> <span></span>
         </div>
+    </div>
+</div>
     </div>
 
     <footer>
         SYSTEM ONLINE v1.0.5 | © 2025 SMART WAREHOUSE INC. | ALL RIGHTS RESERVED
     </footer>
 
-    <script>
-        // Prosty skrypt dla scrolla tylko w tym pliku
-        window.addEventListener('scroll', () => {
-            const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-            const scrollHeight = document.documentElement.scrollHeight;
-            const clientHeight = document.documentElement.clientHeight;
-            
-            const maxScroll = scrollHeight - clientHeight;
-            const scrollPercent = maxScroll > 0 ? scrollTop / maxScroll : 0;
+   <script>
+    window.addEventListener('scroll', () => {
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        
+        const maxScroll = scrollHeight - clientHeight;
+        const scrollPercent = maxScroll > 0 ? scrollTop / maxScroll : 0;
 
-            document.documentElement.style.setProperty('--scroll-pos', scrollPercent);
-        });
-    </script>
+        // Przesuwanie wózka
+        document.documentElement.style.setProperty('--scroll-pos', scrollPercent);
+
+        // LOGIKA POJAWIANIA SIĘ DZIKA
+        const dzik = document.getElementById('easter-egg-link');
+        // Jeśli przewinięto więcej niż 98% strony, pokaż puszkę
+        if (scrollPercent > 0.98) {
+            dzik.classList.add('visible');
+        } else {
+            dzik.classList.remove('visible');
+        }
+    });
+</script>
 
 </body>
 </html>

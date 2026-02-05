@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>W.O.S. - DINO RUNNER MODE</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        body {
+            overflow: hidden;
+            background-color: #202028;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 80px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(to bottom, #334155 0%, #1e293b 100%);
+        }
+
+        canvas {
+            background-color: transparent;
+            border-bottom: 4px solid #fff;
+            image-rendering: pixelated; 
+            max-width: 100%;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* UI Gry */
+        .game-ui {
+            position: absolute;
+            top: 20px; right: 20px;
+            font-family: 'Press Start 2P', cursive;
+            color: #fff;
+            text-align: right;
+            z-index: 10;
+            text-shadow: 2px 2px 0 #000;
+        }
+        .score-box { font-size: 14px; margin-bottom: 10px; color: #4ade80; }
+        .dzik-box { color: #a855f7; font-size: 14px; }
+        .speed-box { color: #facc15; font-size: 10px; margin-top: 5px; opacity: 0.7;}
+
+        /* Ekrany */
+        .overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(17, 17, 17, 0.95);
+            padding: 40px;
+            border: 4px solid #4ade80;
+            text-align: center;
+            color: #fff;
+            display: none;
+            z-index: 20;
+            box-shadow: 10px 10px 0 #000;
+        }
+        .overlay.active { display: block; }
+
+        h1 { color: #4ade80; margin-bottom: 20px; font-size: 20px; line-height: 1.5; }
+        p { font-size: 10px; color: #ccc; margin-bottom: 30px; line-height: 1.8; }
+        
+        .btn {
+            background: #4ade80; color: #000;
+            border: 4px solid #fff; padding: 15px 30px;
+            font-family: inherit; cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .btn:hover { background: #fff; transform: scale(1.05); }
+
+        .assets { display: none; }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <a href="index.html" class="nav-brand"><i class="fas fa-bolt"></i> SECRET MODE</a>
+        <div class="nav-links">
+            <a href="index.html">POWRÓT</a>
+        </div>
+    </nav>
+
+    <div id="game-container">
+        <div class="game-ui">
+            <div class="score-box">WYNIK: <span id="score">0</span></div>
+            <div class="dzik-box">DZIKI: <span id="dziks">0</span></div>
+            <div class="speed-box">PRĘDKOŚĆ: <span id="speed-display">0</span></div>
+        </div>
+
+        <canvas id="runnerCanvas"></canvas>
+
+        <div id="start-screen" class="overlay active">
+            <h1>Odkryłeś<br>Tajna gre</h1>
+            <p>
+                BIEGNIJ PRZED SIEBIE.<br>
+                ZBIERAJ DZIKI W POWIETRZU.<br><br>
+                [SPACJA] - SKOK nad przeszkodami
+            </p>
+            <button class="btn" onclick="startGame()">JAZDA!</button>
+        </div>
+
+        <div id="game-over-screen" class="overlay">
+            <h1 style="color: #ef4444;">KRAKSA!</h1>
+            <p>WYNIK: <span id="final-score">0</span></p>
+            <button class="btn" onclick="resetGame()">RETRY</button>
+        </div>
+    </div>
+
+    <div class="assets">
+        <img id="run-1" src="img/run1.png">
+        <img id="run-2" src="img/run2.png">
+        <img id="run-3" src="img/run3.png">
+        <img id="jump-1" src="img/jump1.png">
+        <img id="jump-2" src="img/jump2.png">
+        <img id="jump-3" src="img/jump3.png">
+        <img id="obstacle-img" src="img/obstacle.png">
+        <img id="dzik-img" src="img/dzik.png">
+    </div>
+
+    <script>
+        const canvas = document.getElementById('runnerCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // --- ZASOBY ---
+        const runFrames = [
+            document.getElementById('run-1'),
+            document.getElementById('run-2'),
+            document.getElementById('run-3')
+        ];
+        
+        const jumpFrames = [
+            document.getElementById('jump-1'),
+            document.getElementById('jump-2'),
+            document.getElementById('jump-3')
+        ];
+
+        const obstacleSprite = document.getElementById('obstacle-img');
+        const dzikSprite = document.getElementById('dzik-img');
+
+        // --- KONFIGURACJA FIZYKI (FLOATY JUMP) ---
+        const GRAVITY = 0.6; 
+        const JUMP_FORCE = -15; 
+        const GROUND_Y = 320; 
+        
+        let gameRunning = false;
+        let animationId;
+        let frame = 0;
+        let score = 0;
+        let dzikCount = 0;
+        
+        // --- PRĘDKOŚĆ ---
+        let gameSpeed = 4.0; 
+        const MAX_SPEED = 18;
+
+        // Zmienna kontrolująca odstępy
+        let nextObstacleGap = 0;
+
+        function resizeCanvas() {
+            canvas.width = 800;
+            canvas.height = 400;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Obiekt Gracza
+        const player = {
+            x: 60,
+            y: GROUND_Y,
+            w: 80, 
+            h: 80, 
+            hitboxPaddingX: 25, 
+            hitboxPaddingY: 15,
+            dy: 0,
+            grounded: true,
+            animFrame: 0
+        };
+
+        let obstacles = [];
+        let items = [];
+        let clouds = []; 
+
+        // --- STEROWANIE ---
+        function handleJump() {
+            if (gameRunning && player.grounded) {
+                player.dy = JUMP_FORCE;
+                player.grounded = false;
+                player.animFrame = 0;
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.code === 'ArrowUp') {
+                e.preventDefault(); 
+                handleJump();
+            }
+        });
+        window.addEventListener('touchstart', (e) => {
+             e.preventDefault();
+             handleJump();
+        });
+
+        // --- START / RESET ---
+        function startGame() {
+            document.getElementById('start-screen').classList.remove('active');
+            document.getElementById('game-over-screen').classList.remove('active');
+            gameRunning = true;
+            resetVariables();
+            loop();
+        }
+
+        function resetVariables() {
+            score = 0;
+            dzikCount = 0;
+            frame = 0;
+            gameSpeed = 4.0;
+            obstacles = [];
+            items = [];
+            clouds = [];
+            
+            // Pierwsza przeszkoda startuje dalej
+            nextObstacleGap = 500; 
+
+            for(let i=0; i<3; i++) spawnCloud(Math.random() * 800);
+            
+            player.y = GROUND_Y;
+            player.dy = 0;
+            player.grounded = true;
+            updateUI();
+        }
+
+        function resetGame() { startGame(); }
+
+        // --- GŁÓWNA PĘTLA ---
+        function loop() {
+            if (!gameRunning) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            updatePhysics();
+            updateBackground(); 
+            updateGameLogic();
+            
+            drawBackground();   
+            drawGame();         
+
+            frame++;
+            animationId = requestAnimationFrame(loop);
+        }
+
+        // --- FIZYKA ---
+        function updatePhysics() {
+            player.dy += GRAVITY;
+            player.y += player.dy;
+
+            if (player.y > GROUND_Y) {
+                player.y = GROUND_Y;
+                player.dy = 0;
+                player.grounded = true;
+            } else {
+                player.grounded = false;
+            }
+        }
+
+        // --- LOGIKA TŁA (CHMURY) ---
+        function spawnCloud(xPos) {
+            clouds.push({
+                x: xPos,
+                y: 50 + Math.random() * 150, 
+                w: 60 + Math.random() * 60,  
+                h: 20 + Math.random() * 10,  
+                speedFactor: 0.2 + Math.random() * 0.3 
+            });
+        }
+
+        function updateBackground() {
+            if (frame % 150 === 0 && Math.random() > 0.5) {
+                spawnCloud(canvas.width);
+            }
+            for (let i = clouds.length - 1; i >= 0; i--) {
+                let c = clouds[i];
+                c.x -= gameSpeed * c.speedFactor;
+                if (c.x + c.w < 0) clouds.splice(i, 1);
+            }
+        }
+
+        function drawBackground() {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.1)"; 
+            clouds.forEach(c => {
+                ctx.fillRect(c.x, c.y, c.w, c.h);
+                ctx.fillRect(c.x + 10, c.y - 10, c.w - 20, c.h + 10);
+            });
+        }
+
+        // --- LOGIKA GRY ---
+        function updateGameLogic() {
+            // Przyspieszanie
+            if (frame % 800 === 0 && gameSpeed < MAX_SPEED) {
+                gameSpeed += 0.2;
+            }
+
+            // 1. GENEROWANIE PRZESZKÓD (NAPRAWIONE)
+            
+            // Pobieramy pozycję ostatniej przeszkody. 
+            // Jeśli tablica pusta, ustawiamy -1000 (jakby dawno minęła),
+            // co wymusza spawn, jeśli dystans jest spełniony.
+            let lastObstacleX = -1000;
+            if (obstacles.length > 0) {
+                lastObstacleX = obstacles[obstacles.length - 1].x;
+            }
+            
+            // Sprawdzamy dystans
+            if (canvas.width - lastObstacleX > nextObstacleGap) {
+                // Spawnujemy
+                obstacles.push({
+                    x: canvas.width,
+                    y: GROUND_Y + 30, 
+                    w: 40, h: 50
+                });
+
+                // NOWY DYSTANS (1.2x do 1.8x standardu)
+                // Standard base ~400px.
+                // Min: 450px, Max: 750px.
+                nextObstacleGap = 450 + Math.random() * 300;
+            }
+
+            // 2. Generowanie Dzików
+            // Spawnujemy je rzadziej, ale tak żeby nie wchodziły w przeszkody
+            if (frame % 120 === 0) { 
+                let canSpawn = true;
+                obstacles.forEach(obs => {
+                    // Jeśli przeszkoda jest blisko prawej krawędzi, nie spawnuj dzika
+                    if (obs.x > canvas.width - 150) canSpawn = false;
+                });
+
+                if (canSpawn) {
+                    items.push({
+                        x: canvas.width,
+                        y: GROUND_Y - 50 - (Math.random() * 100), 
+                        w: 30, h: 50, collected: false
+                    });
+                }
+            }
+
+            // 3. Kolizje Przeszkód
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i];
+                obs.x -= gameSpeed;
+
+                let playerHitbox = {
+                    x: player.x + player.hitboxPaddingX,
+                    y: player.y + player.hitboxPaddingY,
+                    w: player.w - (player.hitboxPaddingX * 2),
+                    h: player.h - (player.hitboxPaddingY) 
+                };
+                let obsHitbox = {
+                    x: obs.x + 5, y: obs.y + 5, w: obs.w - 10, h: obs.h - 5
+                };
+
+                if (rectIntersect(playerHitbox, obsHitbox)) gameOver();
+                if (obs.x + obs.w < 0) obstacles.splice(i, 1);
+            }
+
+            // 4. Kolizje Dzików
+            for (let i = items.length - 1; i >= 0; i--) {
+                let item = items[i];
+                item.x -= gameSpeed;
+
+                if (!item.collected && rectIntersect({x: player.x, y: player.y, w: player.w, h: player.h}, item)) {
+                    item.collected = true;
+                    dzikCount++;
+                    score += 50;
+                    if(gameSpeed < MAX_SPEED) gameSpeed += 0.2;
+                }
+
+                if (item.x + item.w < 0 || item.collected) {
+                    if(item.collected) items.splice(i, 1);
+                    else if(item.x + item.w < 0) items.splice(i, 1);
+                }
+            }
+            
+            score++;
+            updateUI();
+        }
+
+        function rectIntersect(r1, r2) {
+            return !(r2.x > r1.x + r1.w || r2.x + r2.w < r1.x || r2.y > r1.y + r1.h || r2.y + r2.h < r1.y);
+        }
+
+        // --- RYSOWANIE GRY ---
+        function drawGame() {
+            // Podłoga
+            ctx.beginPath();
+            ctx.moveTo(0, GROUND_Y + player.h - 5); 
+            ctx.lineTo(canvas.width, GROUND_Y + player.h - 5);
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Obiekty
+            obstacles.forEach(obs => {
+                if(obstacleSprite.complete && obstacleSprite.naturalWidth !== 0) {
+                    ctx.drawImage(obstacleSprite, obs.x, obs.y, obs.w, obs.h);
+                } else {
+                    ctx.fillStyle = '#ef4444'; 
+                    ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+                }
+            });
+
+            items.forEach(item => {
+                if(dzikSprite.complete && dzikSprite.naturalWidth !== 0) {
+                    ctx.drawImage(dzikSprite, item.x, item.y, item.w, item.h);
+                } else {
+                    ctx.fillStyle = '#a855f7'; 
+                    ctx.fillRect(item.x, item.y, item.w, item.h);
+                }
+            });
+
+            drawPlayerSprite();
+        }
+
+        function drawPlayerSprite() {
+            let sprite;
+
+            if (player.grounded) {
+                let animSpeed = Math.max(3, Math.floor(25 / gameSpeed));
+                if (frame % animSpeed === 0) player.animFrame = (player.animFrame + 1) % 3;
+                sprite = runFrames[player.animFrame];
+            } else {
+                if (player.dy < -5) sprite = jumpFrames[0];
+                else if (player.dy > 5) sprite = jumpFrames[2];
+                else sprite = jumpFrames[1];
+            }
+
+            if (sprite && sprite.complete && sprite.naturalWidth !== 0) {
+                ctx.drawImage(sprite, player.x, player.y, player.w, player.h);
+            } else {
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillRect(player.x, player.y, player.w, player.h);
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('score').innerText = Math.floor(score / 5); 
+            document.getElementById('dziks').innerText = dzikCount;
+            document.getElementById('speed-display').innerText = gameSpeed.toFixed(1);
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            cancelAnimationFrame(animationId);
+            document.getElementById('final-score').innerText = Math.floor(score / 5);
+            document.getElementById('game-over-screen').classList.add('active');
+        }
+    </script>
+</body>
+</html>

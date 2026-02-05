@@ -380,3 +380,25 @@ textarea.retro-input { resize: vertical; min-height: 120px; }
     .info-section { padding: 20px; }
     .submit-btn { width: 100%; }
 }
+/* Styl dla ukrytego dzika */
+#easter-egg-link {
+    position: absolute;
+    right: -35px;      /* Pozycja przy widłach */
+    bottom: 10px;
+    opacity: 0;        /* Ukryty na starcie */
+    transition: opacity 0.4s ease, transform 0.3s ease;
+    pointer-events: none;
+}
+
+#easter-egg-link img {
+    width: 25px;       /* Skala dopasowana do wózka */
+    height: auto;
+    image-rendering: pixelated; /* Zachowanie stylu retro */
+}
+
+/* Klasa aktywowana przez skrypt na końcu strony */
+#easter-egg-link.visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-5px); /* Lekkie uniesienie dla efektu */
+}
